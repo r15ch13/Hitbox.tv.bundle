@@ -2,7 +2,7 @@
 Hitbox.tv Plugin
 
 @author Richard Kuhnt (r15ch13)
-@link https://github.com/r15ch13/bblog-preset-updater
+@link https://github.com/r15ch13/Hitbox.tv.bundle
 @license MIT License (http://r15ch13.mit-license.org/)
 """
 
