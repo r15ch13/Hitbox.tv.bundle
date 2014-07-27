@@ -129,7 +129,10 @@ def GamesList():
 
     oc = ObjectContainer(view_group = "List", title2 = L("Games"))
 
-    json = JSON.ObjectFromURL(url = API_BASE + "games?liveonly=true", cacheTime = 30)
+    try:
+        json = JSON.ObjectFromURL(url = API_BASE + "games?liveonly=true", cacheTime = 30)
+    except urllib2.HTTPError, err:
+        return MessageContainer(L(PLUGIN_TITLE), L("No games found."))
 
     for game in json['categories']:
         oc.add(TVShowObject(
@@ -150,7 +153,10 @@ def GamesLive(category_name, category_id):
 
     oc = ObjectContainer(view_group = "List", title2 = category_name)
 
-    json = JSON.ObjectFromURL(url = API_BASE + "media/live/list?game=" + category_id, cacheTime = 30)
+    try:
+        json = JSON.ObjectFromURL(url = API_BASE + "media/live/list?game=" + category_id, cacheTime = 30)
+    except urllib2.HTTPError, err:
+        return MessageContainer(L(PLUGIN_TITLE), L("No live streams found."))
 
     for stream in json['livestream']:
         oc.add(DirectoryObject(
@@ -177,7 +183,10 @@ def Popular():
 
     oc = ObjectContainer(view_group = "InfoList", title2=L("Popular"))
 
-    json = JSON.ObjectFromURL(url = API_BASE + "media/live/list", cacheTime = 30)
+    try:
+        json = JSON.ObjectFromURL(url = API_BASE + "media/live/list", cacheTime = 30)
+    except urllib2.HTTPError, err:
+        return MessageContainer(L(PLUGIN_TITLE), L("No live streams found."))
 
     for stream in json['livestream']:
 
@@ -210,7 +219,10 @@ def Following():
 
     oc = ObjectContainer(view_group = "InfoList", title2=L("Following"))
 
-    json = JSON.ObjectFromURL(url = API_BASE + "media/live/list?follower_id=" + GetUserId() + "&media=true&size=mid", cacheTime = 30)
+    try:
+        json = JSON.ObjectFromURL(url = API_BASE + "media/live/list?follower_id=" + GetUserId() + "&media=true&size=mid", cacheTime = 30)
+    except urllib2.HTTPError, err:
+        return MessageContainer(L(PLUGIN_TITLE), L("No live streams found."))
 
     for stream in json['livestream']:
 
