@@ -71,7 +71,7 @@ def Login():
                     "app": "desktop",
                 }
             )
-        except urllib2.HTTPError, err:
+        except(urllib2.HTTPError, ValueError), err:
             Log.Error("Hitbox.bundle ----> Username or password wrong! Try again...")
             return MessageContainer(L(PLUGIN_TITLE), "Username or password wrong! Try again...")
 
@@ -93,7 +93,7 @@ def LoadUserId():
     json = ""
     try:
         json = JSON.ObjectFromURL(url = API_BASE + "user/" + Prefs['username'] + "?authToken=" + GetAuthToken() + "&nocache=true")
-    except urllib2.HTTPError, err:
+    except(urllib2.HTTPError, ValueError), err:
         Log.Error("Hitbox.bundle ----> invalid auth token")
 
     if 'user_id' in json:
@@ -131,7 +131,8 @@ def GamesList():
 
     try:
         json = JSON.ObjectFromURL(url = API_BASE + "games?liveonly=true", cacheTime = 30)
-    except urllib2.HTTPError, err:
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
         return MessageContainer(L(PLUGIN_TITLE), L("No games found."))
 
     for game in json['categories']:
@@ -155,7 +156,8 @@ def GamesLive(category_name, category_id):
 
     try:
         json = JSON.ObjectFromURL(url = API_BASE + "media/live/list?game=" + category_id, cacheTime = 30)
-    except urllib2.HTTPError, err:
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
         return MessageContainer(L(PLUGIN_TITLE), L("No live streams found."))
 
     for stream in json['livestream']:
@@ -185,7 +187,8 @@ def Popular():
 
     try:
         json = JSON.ObjectFromURL(url = API_BASE + "media/live/list", cacheTime = 30)
-    except urllib2.HTTPError, err:
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
         return MessageContainer(L(PLUGIN_TITLE), L("No live streams found."))
 
     for stream in json['livestream']:
@@ -221,7 +224,8 @@ def Following():
 
     try:
         json = JSON.ObjectFromURL(url = API_BASE + "media/live/list?follower_id=" + GetUserId() + "&media=true&size=mid", cacheTime = 30)
-    except urllib2.HTTPError, err:
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
         return MessageContainer(L(PLUGIN_TITLE), L("No live streams found."))
 
     for stream in json['livestream']:
