@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>URL</key>
+    <dict>
+        <key>Hitbox.tv-Video</key>
+        <dict>
+            <key>URLPatterns</key>
+            <array>
+                <string>^http://hitbox\.tv/video/[0-9]+$</string>
+                <string>^http://www\.hitbox\.tv/video/[0-9]+$</string>
+            </array>
+        </dict>
+        <key>Hitbox.tv-Stream</key>
+        <dict>
+            <key>URLPatterns</key>
+            <array>
+                <string>^http://hitbox\.tv/[^/]+$</string>
+                <string>^http://www\.hitbox\.tv/[^/]+$</string>
+            </array>
+        </dict>
+    </dict>
+    <key>PlexFrameworkFlags</key>
+    <array>
+        <string>UseRealRTMP</string>
+    </array>
+</dict>
+</plist>

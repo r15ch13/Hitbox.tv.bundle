@@ -1,0 +1,94 @@
+"""
+Hitbox.tv Plugin
+
+@author Richard Kuhnt (r15ch13)
+@link https://github.com/r15ch13/Hitbox.tv.bundle
+@license MIT License (http://r15ch13.mit-license.org/)
+"""
+
+import re
+import urllib2
+
+from datetime import date
+from dateutil.parser import parse
+
+HITBOX_MEDIA_URL  = "http://api.hitbox.tv/media/live"
+HITBOX_SWF_URL    = "http://edge.vie.hitbox.tv/static/player/flowplayer/flowplayer.commercial-3.2.16.swf"
+HITBOX_RTMP_URL   = "rtmp://fml.B6BF.edgecastcdn.net/20B6BF"
+HITBOX_STATIC_URL = "http://edge.sf.hitbox.tv"
+
+####################################################################################################
+def NormalizeURL(url):
+
+    return url.split('?')[0].split('#')[0].rstrip('/')
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+    user_id = GetUserId(url)
+    json = JSON.ObjectFromURL("%s/%s" % (HITBOX_MEDIA_URL, user_id), cacheTime=0)
+
+    if 'livestream' not in json or json['livestream'] is None or len(json['livestream']) is 0:
+        raise Ex.LiveMediaNotStarted
+
+    media = json['livestream'][0]
+
+    display_name = media['media_display_name']
+    game = media['category_name']
+    status = media['media_status']
+    viewers = media['media_views']
+
+    thumb = ""
+    if media['media_thumbnail_large'] is not None:
+        thumb = HITBOX_STATIC_URL + media['media_thumbnail_large']
+
+    art = ""
+    if media['media_bg_image'] is not None:
+        art = HITBOX_STATIC_URL + media['media_bg_image']
+
+    originally_available_at = parse(media['media_live_since'])
+
+    return VideoClipObject(
+        title = '%s - %s' % (display_name, game),
+        summary = '%s\n\n%s Viewers' % (status, viewers),
+        thumb = Resource.ContentsOfURLWithFallback(thumb),
+        genres = [game],
+        art = Resource.ContentsOfURLWithFallback(art),
+        year = date.today().year,
+        originally_available_at = originally_available_at,
+    )
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+    return [
+        MediaObject(
+            protocol = 'rtmp',
+            container = 'mpeg4',
+            video_codec = VideoCodec.H264,
+            video_resolution = 720,
+            video_frame_rate = 30,
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True,
+            parts = [
+                PartObject(
+                    key = Callback(PlayVideo, url=url)
+                )
+            ]
+        )
+    ]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+    user_id = GetUserId(url)
+    rtmp = RTMPVideoURL(url=HITBOX_RTMP_URL, clip=user_id, swf_url=HITBOX_SWF_URL, live=True)
+
+    return IndirectResponse(VideoClipObject, key=rtmp)
+
+####################################################################################################
+def GetUserId(url):
+
+    return url.split('/')[-1]
