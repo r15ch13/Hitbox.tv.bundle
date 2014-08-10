@@ -4,19 +4,9 @@
 <dict>
     <key>CFBundleIdentifier</key>
     <string>com.plexapp.plugins.hitboxtv</string>
-    <key>PlexClientPlatforms</key>
-    <string>*</string>
     <key>PlexFrameworkVersion</key>
     <string>2</string>
-    <key>PlexPluginConsoleLogging</key>
-    <string>1</string>
-    <key>PlexPluginDevMode</key>
-    <string>0</string>
-    <key>PlexPluginClass</key>
-    <string>Content</string>
-    <key>PlexFrameworkFlags</key>
-    <array>
-        <string>UseRealRTMP</string>
-    </array>
+    <key>PlexClientPlatforms</key>
+    <string>*</string>
 </dict>
 </plist>

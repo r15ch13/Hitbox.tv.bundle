@@ -9,43 +9,241 @@ Hitbox.tv Plugin
 import re
 import urllib2
 
-PLUGIN_TITLE    = "Hitbox.tv"
-PLUGIN_PREFIX   = "/video/hitbox.tv"
-
+NAME            = "Hitbox.tv"
 ART             = "art-default.png"
 ICON            = "icon-default.png"
 
-API_BASE        = "http://api.hitbox.tv/"
-STATIC_BASE     = "http://edge.hitbox.tv"
-PLAYER_API      = "http://www.hitbox.tv/api/player/config/{0}/{1}?embed=false&showHidden=true"
-SWF_BASE        = "http://edge.vie.hitbox.tv/static/player/flowplayer/"
-SWF_URL         = SWF_BASE + "flowplayer.commercial-3.2.16.swf"
-RTMP_URL        = "rtmp://fml.B6BF.edgecastcdn.net/20B6BF"
+HITBOX_PAGE_URL          = "http://www.hitbox.tv"
+HITBOX_STATIC_URL        = "http://edge.hitbox.tv"
+HITBOX_AUTH_TOKEN        = "https://api.hitbox.tv/auth/token"
+HITBOX_USER_INFO         = "https://api.hitbox.tv/user"
+HITBOX_TOP_GAMES         = "https://api.hitbox.tv/games"
+HITBOX_LIVE_LIST         = "https://api.hitbox.tv/media/live/list"
+HITBOX_VIDEO_LIST        = "https://api.hitbox.tv/media/video/list"
 
+PAGE_LIMIT = 50
+SEARCH_LIMIT = 30
 
+####################################################################################################
 def Start():
-
-    Plugin.AddViewGroup('InfoList', viewMode = 'InfoList', mediaType = 'items')
-    Plugin.AddViewGroup('List', viewMode = 'List', mediaType = 'items')
-
-    ObjectContainer.title1 = L(PLUGIN_TITLE)
+    ObjectContainer.title1 = NAME
     ObjectContainer.art = R(ART)
-    ObjectContainer.view_group = 'List'
-
     DirectoryObject.thumb = R(ICON)
     DirectoryObject.art = R(ART)
 
+    HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36'
+    HTTP.CacheTime = 120
 
-@handler(PLUGIN_PREFIX, L(PLUGIN_TITLE), thumb=ICON, art=ART)
+####################################################################################################
+@handler('/video/hitbox', NAME)
 def MainMenu():
     oc = ObjectContainer()
-    oc.add(DirectoryObject(key=Callback(Popular), title=L("Popular")))
-    oc.add(DirectoryObject(key=Callback(Following), title=L("Following")))
-    oc.add(DirectoryObject(key=Callback(GamesList), title=L("Games")))
+    oc.add(DirectoryObject(key=Callback(PopularStreamsMenu), title=L("Popular Streams"), summary=L("Browse Popular Streams")))
+    oc.add(DirectoryObject(key=Callback(FollowingMenu), title=L("Following"), summary=L("Browse Live Streams you're following (Login required)")))
+    oc.add(DirectoryObject(key=Callback(GamesMenu), title=L("Games"), summary=L("Browse Live Streams by Game")))
+    oc.add(InputDirectoryObject(key=Callback(SearchResults), title="Search", prompt="Search for a Stream", summary="Search for a Stream"))
     oc.add(PrefsObject(title=L('Preferences')))
+    Log.Info('MainMenu')
     return oc
 
+####################################################################################################
+@route('/video/hitbox/popular')
+def PopularStreamsMenu():
 
+    oc = ObjectContainer(title2=L("Popular Streams"), no_cache=True)
+
+    try:
+        json = JSON.ObjectFromURL("%s?limit=%s" % (HITBOX_LIVE_LIST, PAGE_LIMIT))
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
+        return MessageContainer(NAME, L("No live streams found."))
+
+    for stream in json['livestream']:
+        channel_link = stream['channel']['channel_link']
+        display_name = stream['media_display_name']
+        game = stream['category_name']
+        status = stream['media_status']
+        viewers = stream['media_views']
+
+        thumb = ""
+        if stream['media_thumbnail_large'] is not None:
+            thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
+
+        oc.add(VideoClipObject(
+            url = channel_link,
+            title = '%s - %s' % (display_name, game),
+            summary = '%s\n\n%s Viewers' % (status, viewers),
+            tagline = status,
+            thumb = Resource.ContentsOfURLWithFallback(thumb)
+        ))
+
+    return oc
+
+####################################################################################################
+@route('/video/hitbox/following')
+def FollowingMenu():
+
+    if not IsLoggedIn():
+        return MessageContainer(NAME, L("Please provide your login credentials in the plugin preferences."))
+
+    oc = ObjectContainer(title2=L("Following"), no_cache=True)
+
+    try:
+        json = JSON.ObjectFromURL("%s?follower_id=%s&media=true&size=mid" % (HITBOX_LIVE_LIST, GetUserId()))
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
+        return MessageContainer(NAME, L("No live streams found."))
+
+    for stream in json['livestream']:
+        channel_link = stream['channel']['channel_link']
+        display_name = stream['media_display_name']
+        game = stream['category_name']
+        status = stream['media_status']
+        viewers = stream['media_views']
+
+        thumb = ""
+        if stream['media_thumbnail_large'] is not None:
+            thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
+
+        oc.add(VideoClipObject(
+            url = channel_link,
+            title = '%s - %s' % (display_name, game),
+            summary = '%s\n\n%s Viewers' % (status, viewers),
+            tagline = status,
+            thumb = Resource.ContentsOfURLWithFallback(thumb)
+        ))
+
+    return oc
+
+####################################################################################################
+@route('/video/hitbox/games')
+def GamesMenu():
+
+    oc = ObjectContainer(title2 = L("Games"), no_cache=True)
+
+    try:
+        json = JSON.ObjectFromURL("%s?liveonly=true" % HITBOX_TOP_GAMES)
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
+        return MessageContainer(NAME, L("No games found."))
+
+    for game in json['categories']:
+        thumb = ""
+        if game['category_logo_large'] is not None:
+            thumb = HITBOX_STATIC_URL + game['category_logo_large']
+
+        oc.add(TVShowObject(
+            key = Callback(
+                GameStreamsMenu,
+                category_name = game['category_name'],
+                category_id = game['category_id']
+            ),
+            summary = '%s Viewers' % str(game['category_viewers']),
+            rating_key = game['category_id'],
+            title = game['category_name'],
+            thumb = Resource.ContentsOfURLWithFallback(thumb)
+        ))
+    return oc
+
+####################################################################################################
+@route('/video/hitbox/game/streams')
+def GameStreamsMenu(category_name, category_id):
+
+    oc = ObjectContainer(title2 = category_name, no_cache=True)
+
+    try:
+        json = JSON.ObjectFromURL("%s?game=%s" % (HITBOX_LIVE_LIST, category_id))
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
+        return MessageContainer(NAME, L("No live streams found."))
+
+    for stream in json['livestream']:
+        channel_link = stream['channel']['channel_link']
+        display_name = stream['media_display_name']
+        game = stream['category_name']
+        status = stream['media_status']
+        viewers = stream['media_views']
+
+        thumb = ""
+        if stream['media_thumbnail_large'] is not None:
+            thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
+
+        oc.add(VideoClipObject(
+            url = channel_link,
+            title = display_name,
+            summary = '%s\n\n%s Viewers' % (status, viewers),
+            tagline = status,
+            thumb = Resource.ContentsOfURLWithFallback(thumb)
+        ))
+
+    return oc
+
+####################################################################################################
+def SearchResults(query=''):
+
+    oc = ObjectContainer(no_cache=True)
+
+    stream_results = ""
+    try:
+        stream_results = JSON.ObjectFromURL("%s?filter=popular&limit=%s&media=true&search=%s&size=list" % (HITBOX_LIVE_LIST, SEARCH_LIMIT, String.Quote(query, usePlus=True)))
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
+
+    if 'livestream' in stream_results:
+        for stream in stream_results['livestream']:
+            channel_link = stream['channel']['channel_link']
+            display_name = stream['media_display_name']
+            game = stream['category_name']
+            status = stream['media_status']
+            viewers = stream['media_views']
+
+            thumb = ""
+            if stream['media_thumbnail_large'] is not None:
+                thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
+
+            oc.add(VideoClipObject(
+                url = channel_link,
+                title = '%s: %s - %s' % (L('Live'), display_name, game),
+                summary = '%s\n\n%s Viewers' % (status, viewers),
+                tagline = status,
+                thumb = Resource.ContentsOfURLWithFallback(thumb)
+            ))
+
+    video_results = ""
+    try:
+        video_results = JSON.ObjectFromURL("%s?filter=popular&limit=%s&media=true&search=%s&size=list" % (HITBOX_VIDEO_LIST, SEARCH_LIMIT, String.Quote(query, usePlus=True)))
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
+
+    if 'video' in video_results:
+        Log.Info("Vidoes")
+        for video in video_results['video']:
+            video_link = "%s/video/%s" % (HITBOX_PAGE_URL, video['media_id'])
+
+            display_name = video['media_display_name']
+            game = video['category_name']
+            status = video['media_status']
+            viewers = video['media_views']
+
+            thumb = ""
+            if video['media_thumbnail_large'] is not None:
+                thumb = HITBOX_STATIC_URL + video['media_thumbnail_large']
+
+            oc.add(VideoClipObject(
+                url = video_link,
+                title = '%s: %s - %s' % (L('Video'), display_name, game),
+                summary = '%s\n\n%s Views' % (status, viewers),
+                tagline = status,
+                thumb = Resource.ContentsOfURLWithFallback(thumb)
+            ))
+
+
+    if len(oc) < 1:
+        return MessageContainer(NAME, L("No streams or vidoes were found that match your query."))
+
+    return oc
+
+####################################################################################################
 def ValidatePrefs():
 
     Logout()
@@ -53,18 +251,18 @@ def ValidatePrefs():
 
     if IsLoggedIn():
         Log.Info("Hitbox.bundle ----> Login successful!")
-        return MessageContainer(L(PLUGIN_TITLE), "Login successful!")
+        return MessageContainer(NAME, "Login successful!")
     else:
         Log.Error("Hitbox.bundle ----> Login: Username or password wrong! Try again...")
-        return MessageContainer(L(PLUGIN_TITLE), "Username or password wrong! Try again...")
+        return MessageContainer(NAME, "Username or password wrong! Try again...")
 
-
+####################################################################################################
 def Login():
     if 'authToken' not in Dict and 'userId' not in Dict:
         json = ""
         try:
             json = JSON.ObjectFromURL(
-                url = API_BASE + "auth/token",
+                url = HITBOX_AUTH_TOKEN,
                 values = {
                     "login": Prefs['username'],
                     "pass": Prefs['password'],
@@ -73,7 +271,7 @@ def Login():
             )
         except(urllib2.HTTPError, ValueError), err:
             Log.Error("Hitbox.bundle ----> Username or password wrong! Try again...")
-            return MessageContainer(L(PLUGIN_TITLE), "Username or password wrong! Try again...")
+            return MessageContainer(NAME, "Username or password wrong! Try again...")
 
         if 'authToken' in json:
             Dict['authToken'] = json['authToken']
@@ -88,11 +286,11 @@ def Login():
         Logout()
         Log.Error("Hitbox.bundle ----> Something in the login process went wrong.")
 
-
+####################################################################################################
 def LoadUserId():
     json = ""
     try:
-        json = JSON.ObjectFromURL(url = API_BASE + "user/" + Prefs['username'] + "?authToken=" + GetAuthToken() + "&nocache=true")
+        json = JSON.ObjectFromURL("%s/%s?authToken=%s&nocache=true" % (HITBOX_USER_INFO, Prefs['username'], GetAuthToken()))
     except(urllib2.HTTPError, ValueError), err:
         Log.Error("Hitbox.bundle ----> invalid auth token")
 
@@ -100,191 +298,25 @@ def LoadUserId():
         return json['user_id']
     return ""
 
-
+####################################################################################################
 def Logout():
     if 'authToken' in Dict:
         del Dict['authToken']
     if 'userId' in Dict:
         del Dict['userId']
 
-
+####################################################################################################
 def GetAuthToken():
     if 'authToken' in Dict:
         return Dict['authToken']
     return ""
 
-
+####################################################################################################
 def GetUserId():
     if 'userId' in Dict:
         return Dict['userId']
     return ""
 
-
+####################################################################################################
 def IsLoggedIn():
     return ('authToken' in Dict and Dict['authToken'] != "" and 'userId' in Dict and Dict['userId'] != "")
-
-
-@route(PLUGIN_PREFIX+'/games')
-def GamesList():
-
-    oc = ObjectContainer(view_group = "List", title2 = L("Games"))
-
-    try:
-        json = JSON.ObjectFromURL(url = API_BASE + "games?liveonly=true", cacheTime = 30)
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
-        return MessageContainer(L(PLUGIN_TITLE), L("No games found."))
-
-    for game in json['categories']:
-        oc.add(TVShowObject(
-            key = Callback(
-                GamesLive,
-                category_name = game['category_name'],
-                category_id = game['category_id']
-            ),
-            rating_key = game['category_id'],
-            title = game['category_name'],
-            thumb = STATIC_BASE + game['category_logo_large']
-        ))
-    return oc
-
-
-@route(PLUGIN_PREFIX+'/games/live')
-def GamesLive(category_name, category_id):
-
-    oc = ObjectContainer(view_group = "List", title2 = category_name)
-
-    try:
-        json = JSON.ObjectFromURL(url = API_BASE + "media/live/list?game=" + category_id, cacheTime = 30)
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
-        return MessageContainer(L(PLUGIN_TITLE), L("No live streams found."))
-
-    for stream in json['livestream']:
-        oc.add(DirectoryObject(
-            key = Callback(
-                PlayStream,
-                category_name = stream['category_name'],
-                media_display_name = stream['media_display_name'],
-                media_status = stream['media_status'],
-                media_name = stream['media_name'],
-                media_thumbnail = STATIC_BASE + stream['media_thumbnail'],
-                media_views = stream['media_views'],
-                video_url = RTMP_URL
-            ),
-            title = stream['media_display_name'],
-            summary = stream['media_status'],
-            thumb = STATIC_BASE + stream['channel']['user_logo']
-        ))
-
-    return oc
-
-
-@route(PLUGIN_PREFIX+'/popular')
-def Popular():
-
-    oc = ObjectContainer(view_group = "InfoList", title2=L("Popular"))
-
-    try:
-        json = JSON.ObjectFromURL(url = API_BASE + "media/live/list", cacheTime = 30)
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
-        return MessageContainer(L(PLUGIN_TITLE), L("No live streams found."))
-
-    for stream in json['livestream']:
-
-        oc.add(VideoClipObject(
-            key = Callback(
-                PlayStream,
-                category_name = stream['category_name'],
-                media_display_name = stream['media_display_name'],
-                media_status = stream['media_status'],
-                media_name = stream['media_name'],
-                media_thumbnail = STATIC_BASE + stream['media_thumbnail'],
-                media_views = stream['media_views'],
-                video_url = RTMP_URL
-            ),
-            rating_key=stream['media_name'],
-            title = str(stream['category_name']) + ": " + stream['media_display_name'],
-            tagline = stream['media_status'],
-            summary="<u>"+str(stream['category_name']) + "</u>\n\n" + L("Live with %s Viewers" % stream['media_views']),
-            thumb = STATIC_BASE + stream['media_thumbnail']
-        ))
-
-    return oc
-
-
-@route(PLUGIN_PREFIX+'/following')
-def Following():
-
-    if not IsLoggedIn():
-        return MessageContainer(L(PLUGIN_TITLE), L("Please provide your login credentials in the plugin preferences."))
-
-    oc = ObjectContainer(view_group = "InfoList", title2=L("Following"))
-
-    try:
-        json = JSON.ObjectFromURL(url = API_BASE + "media/live/list?follower_id=" + GetUserId() + "&media=true&size=mid", cacheTime = 30)
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
-        return MessageContainer(L(PLUGIN_TITLE), L("No live streams found."))
-
-    for stream in json['livestream']:
-
-        oc.add(VideoClipObject(
-            key = Callback(
-                PlayStream,
-                category_name = stream['category_name'],
-                media_display_name = stream['media_display_name'],
-                media_status = stream['media_status'],
-                media_name = stream['media_name'],
-                media_thumbnail = STATIC_BASE + stream['media_thumbnail'],
-                media_views = stream['media_views'],
-                video_url = RTMP_URL
-            ),
-            rating_key=stream['media_name'],
-            title = str(stream['category_name']) + ": " + stream['media_display_name'],
-            tagline = stream['media_status'],
-            summary="<u>"+str(stream['category_name']) + "</u>\n\n" + L("Live with %s Viewers" % stream['media_views']),
-            thumb = STATIC_BASE + stream['media_thumbnail']
-        ))
-
-    return oc
-
-
-@route(PLUGIN_PREFIX+'/play')
-def PlayStream(video_url, category_name, media_name, media_display_name = '', media_status = '', media_thumbnail = '', media_views = 0):
-
-    oc = ObjectContainer(title2 = media_display_name)
-
-    call_args = {
-        "category_name": category_name,
-        "media_display_name": media_display_name,
-        "media_status": media_status,
-        "media_name": media_name,
-        "media_thumbnail": media_thumbnail,
-        "media_views": media_views,
-        "video_url": video_url,
-    }
-
-    rtmpVid = RTMPVideoURL(url=video_url, clip=media_name, swf_url=SWF_URL, live=True)
-
-    vco = VideoClipObject(
-        key=Callback(PlayStream, **call_args),
-        rating_key=media_name,
-        title = str(category_name) + ": " + media_display_name,
-        tagline = media_status,
-        summary="<u>"+str(category_name) + "</u>\n\n" + L("Live with %s Viewers" % media_views),
-        thumb=media_thumbnail,
-        items=[
-            MediaObject(
-                parts=[
-                    PartObject(
-                        key=rtmpVid
-                    )
-                ]
-            )
-        ]
-    )
-
-    oc.add(vco)
-    return oc
