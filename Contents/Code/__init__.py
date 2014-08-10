@@ -17,6 +17,8 @@ HITBOX_PAGE_URL          = "http://www.hitbox.tv"
 HITBOX_STATIC_URL        = "http://edge.hitbox.tv"
 HITBOX_AUTH_TOKEN        = "https://api.hitbox.tv/auth/token"
 HITBOX_USER_INFO         = "https://api.hitbox.tv/user"
+HITBOX_USER_TEAMS        = "https://api.hitbox.tv/teams"
+HITBOX_TEAM              = "https://api.hitbox.tv/team"
 HITBOX_TOP_GAMES         = "https://api.hitbox.tv/games"
 HITBOX_LIVE_LIST         = "https://api.hitbox.tv/media/live/list"
 HITBOX_VIDEO_LIST        = "https://api.hitbox.tv/media/video/list"
@@ -39,8 +41,9 @@ def Start():
 def MainMenu():
     oc = ObjectContainer()
     oc.add(DirectoryObject(key=Callback(PopularStreamsMenu), title=L("Popular Streams"), summary=L("Browse Popular Streams")))
-    oc.add(DirectoryObject(key=Callback(FollowingMenu), title=L("Following"), summary=L("Browse Live Streams you're following (Login required)")))
     oc.add(DirectoryObject(key=Callback(GamesMenu), title=L("Games"), summary=L("Browse Live Streams by Game")))
+    oc.add(DirectoryObject(key=Callback(FollowingMenu), title=L("Following"), summary=L("Browse Live Streams you're following (Login required)")))
+    oc.add(DirectoryObject(key=Callback(TeamsMenu), title=L("My Teams"), summary=L("Browse Live Streams of your Teams (Login required)")))
     oc.add(InputDirectoryObject(key=Callback(SearchResults), title="Search", prompt="Search for a Stream", summary="Search for a Stream"))
     oc.add(PrefsObject(title=L('Preferences')))
     Log.Info('MainMenu')
@@ -112,6 +115,99 @@ def FollowingMenu():
             tagline = status,
             thumb = Resource.ContentsOfURLWithFallback(thumb)
         ))
+
+    return oc
+
+####################################################################################################
+@route('/video/hitbox/teams')
+def TeamsMenu():
+
+    if not IsLoggedIn():
+        return MessageContainer(NAME, L("Please provide your login credentials in the plugin preferences."))
+
+    oc = ObjectContainer(title2 = L("My Teams"), no_cache=True)
+
+    try:
+        json = JSON.ObjectFromURL("%s/%s?authToken=%s&nocache=true" % (HITBOX_USER_TEAMS, Prefs['username'], GetAuthToken()))
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
+        return MessageContainer(NAME, L("No teams found."))
+
+    for team in json['teams']:
+        Log.Info(team)
+        thumb = ""
+        if team['info']['group_logo_large'] is not None:
+            thumb = HITBOX_STATIC_URL + team['info']['group_logo_large']
+        if team['info']['group_logo_small'] is not None:
+            thumb = HITBOX_STATIC_URL + team['info']['group_logo_small']
+
+        oc.add(TVShowObject(
+            key = Callback(
+                TeamStreamsMenu,
+                group_display_name = team['info']['group_display_name'],
+                group_name = team['info']['group_name'],
+                group_id = team['info']['group_id']
+            ),
+            rating_key = team['info']['group_id'],
+            title = team['info']['group_display_name'],
+            thumb = Resource.ContentsOfURLWithFallback(thumb)
+        ))
+    return oc
+
+####################################################################################################
+@route('/video/hitbox/team/streams')
+def TeamStreamsMenu(group_display_name, group_name, group_id):
+
+    oc = ObjectContainer(title2 = group_display_name, no_cache=True)
+
+    try:
+        json = JSON.ObjectFromURL("%s/%s?liveonly=true&media=true&media_name=list&media_type=live&size=mid" % (HITBOX_TEAM, group_name))
+    except(urllib2.HTTPError, ValueError), err:
+        Log.Error(err)
+        return MessageContainer(NAME, L("No live streams found."))
+
+    for stream in json['media']['livestream']:
+        channel_link = stream['channel']['channel_link']
+        display_name = stream['media_display_name']
+        game = stream['category_name']
+        status = stream['media_status']
+        viewers = stream['media_views']
+
+        thumb = ""
+        if stream['media_thumbnail_large'] is not None:
+            thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
+
+        oc.add(VideoClipObject(
+            url = channel_link,
+            title = '%s: %s - %s' % (L('Live'), display_name, game),
+            summary = '%s\n\n%s Viewers' % (status, viewers),
+            tagline = status,
+            thumb = Resource.ContentsOfURLWithFallback(thumb)
+        ))
+
+    for video in json['media']['video']:
+        video_link = "%s/video/%s" % (HITBOX_PAGE_URL, video['media_id'])
+
+        display_name = video['media_display_name']
+        game = video['category_name']
+        status = video['media_status']
+        viewers = video['media_views']
+
+        thumb = ""
+        if video['media_thumbnail_large'] is not None:
+            thumb = HITBOX_STATIC_URL + video['media_thumbnail_large']
+
+        oc.add(VideoClipObject(
+            url = video_link,
+            title = '%s: %s - %s' % (L('Video'), display_name, game),
+            summary = '%s\n\n%s Views' % (status, viewers),
+            tagline = status,
+            thumb = Resource.ContentsOfURLWithFallback(thumb)
+        ))
+
+
+    if len(oc) < 1:
+        return MessageContainer(NAME, L("No streams or vidoes were found."))
 
     return oc
 
