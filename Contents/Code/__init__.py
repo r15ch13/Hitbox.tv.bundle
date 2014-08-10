@@ -13,15 +13,15 @@ NAME            = "Hitbox.tv"
 ART             = "art-default.png"
 ICON            = "icon-default.png"
 
-HITBOX_PAGE_URL          = "http://www.hitbox.tv"
-HITBOX_STATIC_URL        = "http://edge.hitbox.tv"
-HITBOX_AUTH_TOKEN        = "https://api.hitbox.tv/auth/token"
-HITBOX_USER_INFO         = "https://api.hitbox.tv/user"
-HITBOX_USER_TEAMS        = "https://api.hitbox.tv/teams"
-HITBOX_TEAM              = "https://api.hitbox.tv/team"
-HITBOX_TOP_GAMES         = "https://api.hitbox.tv/games"
-HITBOX_LIVE_LIST         = "https://api.hitbox.tv/media/live/list"
-HITBOX_VIDEO_LIST        = "https://api.hitbox.tv/media/video/list"
+HITBOX_PAGE_URL     = "https://www.hitbox.tv"
+HITBOX_STATIC_URL   = "http://edge.hitbox.tv"
+HITBOX_AUTH_TOKEN   = "https://api.hitbox.tv/auth/token"
+HITBOX_USER_INFO    = "https://api.hitbox.tv/user"
+HITBOX_TEAMS        = "https://api.hitbox.tv/teams"
+HITBOX_TEAM         = "https://api.hitbox.tv/team"
+HITBOX_TOP_GAMES    = "https://api.hitbox.tv/games"
+HITBOX_LIVE_LIST    = "https://api.hitbox.tv/media/live/list"
+HITBOX_VIDEO_LIST   = "https://api.hitbox.tv/media/video/list"
 
 PAGE_LIMIT = 50
 SEARCH_LIMIT = 30
@@ -128,7 +128,7 @@ def TeamsMenu():
     oc = ObjectContainer(title2 = L("My Teams"), no_cache=True)
 
     try:
-        json = JSON.ObjectFromURL("%s/%s?authToken=%s&nocache=true" % (HITBOX_USER_TEAMS, Prefs['username'], GetAuthToken()))
+        json = JSON.ObjectFromURL("%s/%s?authToken=%s&nocache=true" % (HITBOX_TEAMS, Prefs['username'], GetAuthToken()))
     except(urllib2.HTTPError, ValueError), err:
         Log.Error(err)
         return MessageContainer(NAME, L("No teams found."))
@@ -312,7 +312,6 @@ def SearchResults(query=''):
         Log.Error(err)
 
     if 'video' in video_results:
-        Log.Info("Vidoes")
         for video in video_results['video']:
             video_link = "%s/video/%s" % (HITBOX_PAGE_URL, video['media_id'])
 
