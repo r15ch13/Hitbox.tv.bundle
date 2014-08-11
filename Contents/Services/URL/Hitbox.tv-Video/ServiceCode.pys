@@ -6,9 +6,6 @@ Hitbox.tv Plugin
 @license MIT License (http://r15ch13.mit-license.org/)
 """
 
-import re
-import urllib2
-
 from datetime import date
 from dateutil.parser import parse
 

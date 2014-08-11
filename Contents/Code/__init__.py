@@ -8,6 +8,7 @@ Hitbox.tv Plugin
 
 import re
 import urllib2
+import urllib2_new
 
 NAME            = "Hitbox.tv"
 ART             = "art-default.png"
@@ -57,8 +58,7 @@ def PopularStreamsMenu():
 
     try:
         json = JSON.ObjectFromURL("%s?limit=%s" % (HITBOX_LIVE_LIST, PAGE_LIMIT))
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
         return MessageContainer(NAME, L("No live streams found."))
 
     for stream in json['livestream']:
@@ -93,8 +93,7 @@ def FollowingMenu():
 
     try:
         json = JSON.ObjectFromURL("%s?follower_id=%s&media=true&size=mid" % (HITBOX_LIVE_LIST, GetUserId()))
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
         return MessageContainer(NAME, L("No live streams found."))
 
     for stream in json['livestream']:
@@ -129,8 +128,7 @@ def TeamsMenu():
 
     try:
         json = JSON.ObjectFromURL("%s/%s?authToken=%s&nocache=true" % (HITBOX_TEAMS, Prefs['username'], GetAuthToken()))
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
         return MessageContainer(NAME, L("No teams found."))
 
     for team in json['teams']:
@@ -162,8 +160,7 @@ def TeamStreamsMenu(group_display_name, group_name, group_id):
 
     try:
         json = JSON.ObjectFromURL("%s/%s?liveonly=true&media=true&media_name=list&media_type=live&size=mid" % (HITBOX_TEAM, group_name))
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
         return MessageContainer(NAME, L("No live streams found."))
 
     for stream in json['media']['livestream']:
@@ -219,8 +216,7 @@ def GamesMenu():
 
     try:
         json = JSON.ObjectFromURL("%s?liveonly=true" % HITBOX_TOP_GAMES)
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
         return MessageContainer(NAME, L("No games found."))
 
     for game in json['categories']:
@@ -249,8 +245,7 @@ def GameStreamsMenu(category_name, category_id):
 
     try:
         json = JSON.ObjectFromURL("%s?game=%s" % (HITBOX_LIVE_LIST, category_id))
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
         return MessageContainer(NAME, L("No live streams found."))
 
     for stream in json['livestream']:
@@ -282,8 +277,8 @@ def SearchResults(query=''):
     stream_results = ""
     try:
         stream_results = JSON.ObjectFromURL("%s?filter=popular&limit=%s&media=true&search=%s&size=list" % (HITBOX_LIVE_LIST, SEARCH_LIMIT, String.Quote(query, usePlus=True)))
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
+        pass
 
     if 'livestream' in stream_results:
         for stream in stream_results['livestream']:
@@ -308,8 +303,8 @@ def SearchResults(query=''):
     video_results = ""
     try:
         video_results = JSON.ObjectFromURL("%s?filter=popular&limit=%s&media=true&search=%s&size=list" % (HITBOX_VIDEO_LIST, SEARCH_LIMIT, String.Quote(query, usePlus=True)))
-    except(urllib2.HTTPError, ValueError), err:
-        Log.Error(err)
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
+        pass
 
     if 'video' in video_results:
         for video in video_results['video']:
@@ -364,7 +359,7 @@ def Login():
                     "app": "desktop",
                 }
             )
-        except(urllib2.HTTPError, ValueError), err:
+        except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
             Log.Error("Hitbox.bundle ----> Username or password wrong! Try again...")
             return MessageContainer(NAME, "Username or password wrong! Try again...")
 
@@ -386,7 +381,7 @@ def LoadUserId():
     json = ""
     try:
         json = JSON.ObjectFromURL("%s/%s?authToken=%s&nocache=true" % (HITBOX_USER_INFO, Prefs['username'], GetAuthToken()))
-    except(urllib2.HTTPError, ValueError), err:
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
         Log.Error("Hitbox.bundle ----> invalid auth token")
 
     if 'user_id' in json:

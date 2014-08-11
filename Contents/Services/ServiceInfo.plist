@@ -8,16 +8,16 @@
         <dict>
             <key>URLPatterns</key>
             <array>
-                <string>^http://hitbox\.tv/video/[0-9]+$</string>
-                <string>^http://www\.hitbox\.tv/video/[0-9]+$</string>
+                <string>^https?://hitbox\.tv/video/[0-9]+$</string>
+                <string>^https?://www\.hitbox\.tv/video/[0-9]+$</string>
             </array>
         </dict>
         <key>Hitbox.tv-Stream</key>
         <dict>
             <key>URLPatterns</key>
             <array>
-                <string>^http://hitbox\.tv/[^/]+$</string>
-                <string>^http://www\.hitbox\.tv/[^/]+$</string>
+                <string>^https?://hitbox\.tv/[^/]+$</string>
+                <string>^https?://www\.hitbox\.tv/[^/]+$</string>
             </array>
         </dict>
     </dict>
