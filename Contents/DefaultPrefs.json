@@ -12,5 +12,23 @@
         "default": "",
         "option": "hidden",
         "secure": "true"
+    },
+    {
+        "id": "countryFilter",
+        "type": "text",
+        "label": "Filter streams by country (comma separated, e.g. DE,PL)",
+        "default": ""
+    },
+    {
+        "id": "countryFilterPopular",
+        "type": "bool",
+        "label": "Activate filter for popular streams",
+        "default": ""
+    },
+    {
+        "id": "countryFilterGames",
+        "type": "bool",
+        "label": "Activate filter for game streams",
+        "default": ""
     }
 ]

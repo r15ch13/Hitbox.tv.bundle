@@ -57,7 +57,10 @@ def PopularStreamsMenu():
     oc = ObjectContainer(title2=L("Popular Streams"), no_cache=True)
 
     try:
-        json = JSON.ObjectFromURL("%s?limit=%s" % (HITBOX_LIVE_LIST, PAGE_LIMIT))
+        if Prefs['countryFilterPopular']:
+            json = JSON.ObjectFromURL("%s?limit=%s&countries=%s" % (HITBOX_LIVE_LIST, PAGE_LIMIT, Prefs['countryFilter']))
+        else:
+            json = JSON.ObjectFromURL("%s?limit=%s" % (HITBOX_LIVE_LIST, PAGE_LIMIT))
     except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
         return MessageContainer(NAME, L("No live streams found."))
 
@@ -72,9 +75,17 @@ def PopularStreamsMenu():
         if stream['media_thumbnail_large'] is not None:
             thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
 
+        countries = ""
+        if stream['media_countries'] is not None:
+            countries = ", ".join(stream['media_countries'])
+
+        title = '%s - %s' % (display_name, game)
+        if countries is not "":
+            title = '%s - %s [%s]' % (display_name, game, countries)
+
         oc.add(VideoClipObject(
             url = channel_link,
-            title = '%s - %s' % (display_name, game),
+            title = title,
             summary = '%s\n\n%s Viewers' % (status, viewers),
             tagline = status,
             thumb = Resource.ContentsOfURLWithFallback(thumb)
@@ -244,7 +255,10 @@ def GameStreamsMenu(category_name, category_id):
     oc = ObjectContainer(title2 = category_name, no_cache=True)
 
     try:
-        json = JSON.ObjectFromURL("%s?game=%s" % (HITBOX_LIVE_LIST, category_id))
+        if Prefs['countryFilterGames']:
+            json = JSON.ObjectFromURL("%s?game=%s&countries=%s" % (HITBOX_LIVE_LIST, category_id, Prefs['countryFilter']))
+        else:
+            json = JSON.ObjectFromURL("%s?game=%s" % (HITBOX_LIVE_LIST, category_id))
     except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
         return MessageContainer(NAME, L("No live streams found."))
 
@@ -259,9 +273,17 @@ def GameStreamsMenu(category_name, category_id):
         if stream['media_thumbnail_large'] is not None:
             thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
 
+        countries = ""
+        if stream['media_countries'] is not None:
+            countries = ", ".join(stream['media_countries'])
+
+        title = '%s - %s' % (display_name, game)
+        if countries is not "":
+            title = '%s - %s [%s]' % (display_name, game, countries)
+
         oc.add(VideoClipObject(
             url = channel_link,
-            title = display_name,
+            title = title,
             summary = '%s\n\n%s Viewers' % (status, viewers),
             tagline = status,
             thumb = Resource.ContentsOfURLWithFallback(thumb)
