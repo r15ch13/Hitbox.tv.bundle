@@ -10,9 +10,9 @@ from datetime import date
 from dateutil.parser import parse
 
 HITBOX_MEDIA_URL  = "https://api.hitbox.tv/media/live"
-HITBOX_SWF_URL    = "http://edge.vie.hitbox.tv/static/player/flowplayer/flowplayer.commercial-3.2.16.swf"
-HITBOX_RTMP_URL   = "rtmp://fml.B6BF.edgecastcdn.net/20B6BF"
+HITBOX_SWF_URL    = "http://www.hitbox.tv/static/player/flowplayer/flowplayer.commercial-3.2.16.swf"
 HITBOX_STATIC_URL = "http://edge.sf.hitbox.tv"
+HITBOX_CONFIG_URL = "https://api.hitbox.tv/player/config/live"
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -81,7 +81,15 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
     user_id = GetUserId(url)
-    rtmp = RTMPVideoURL(url=HITBOX_RTMP_URL, clip=user_id, swf_url=HITBOX_SWF_URL, live=True)
+
+    try:
+        json = JSON.ObjectFromURL("%s/%s" % (HITBOX_CONFIG_URL, user_id))
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
+        return MessageContainer(NAME, L("Something went wrong..."))
+
+    rtmpUrl = json['playlist'][0]['netConnectionUrl']
+
+    rtmp = RTMPVideoURL(url=rtmpUrl, clip=user_id, swf_url=HITBOX_SWF_URL, live=True)
 
     return IndirectResponse(VideoClipObject, key=rtmp)
 
