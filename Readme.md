@@ -1,6 +1,7 @@
 Hitbox.tv Plex-Plugin
 ====================
 A plugin for Plex Media Server to allow streaming of Hitbox.tv live streams.
+Only works with clients that are capable of playing RTMP-Streams.
 
 Installation
 ------------
