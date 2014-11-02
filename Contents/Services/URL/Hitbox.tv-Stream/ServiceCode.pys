@@ -63,9 +63,8 @@ def MediaObjectsForURL(url):
             protocol = 'rtmp',
             container = 'mpeg4',
             video_codec = VideoCodec.H264,
-            video_resolution = 720,
+            video_resolution = 1080,
             video_frame_rate = 30,
-            audio_codec = AudioCodec.AAC,
             audio_channels = 2,
             optimized_for_streaming = True,
             parts = [
