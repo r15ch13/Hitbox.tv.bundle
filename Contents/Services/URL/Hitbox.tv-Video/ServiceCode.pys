@@ -10,8 +10,8 @@ from datetime import date
 from dateutil.parser import parse
 
 HITBOX_MEDIA_URL  = "https://api.hitbox.tv/media/video"
-HITBOX_SWF_URL    = "http://edge.vie.hitbox.tv/static/player/flowplayer/flowplayer.commercial-3.2.16.swf"
-HITBOX_RTMP_URL   = "rtmp://fml.B6BF.edgecastcdn.net/20B6BF"
+HITBOX_SWF_URL    = "http://www.hitbox.tv/static/player/flowplayer/flowplayer.commercial-3.2.16.swf"
+HITBOX_RTMP_URL   = "rtmp://edge.live.hitbox.tv/live"
 HITBOX_STATIC_URL = "http://edge.sf.hitbox.tv"
 
 ####################################################################################################
@@ -65,9 +65,8 @@ def MediaObjectsForURL(url):
             protocol = 'rtmp',
             container = 'mpeg4',
             video_codec = VideoCodec.H264,
-            video_resolution = 720,
+            video_resolution = 1080,
             video_frame_rate = 30,
-            audio_codec = AudioCodec.AAC,
             audio_channels = 2,
             optimized_for_streaming = True,
             parts = [
