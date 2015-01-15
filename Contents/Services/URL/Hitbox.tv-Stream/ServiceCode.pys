@@ -13,6 +13,7 @@ HITBOX_MEDIA_URL  = "https://api.hitbox.tv/media/live"
 HITBOX_SWF_URL    = "http://www.hitbox.tv/static/player/flowplayer/flowplayer.commercial-3.2.16.swf"
 HITBOX_STATIC_URL = "http://edge.sf.hitbox.tv"
 HITBOX_CONFIG_URL = "https://api.hitbox.tv/player/config/live"
+HITBOX_HLS_PLAYLIST_URL = "http://api.hitbox.tv/player/hls"
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -60,16 +61,30 @@ def MediaObjectsForURL(url):
 
     return [
         MediaObject(
+            protocol = 'hls',
+            container = 'mpegts',
+            video_codec = VideoCodec.H264,
+            video_resolution = 720,
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True,
+            parts = [
+                PartObject(
+                    key = Callback(PlayHLSVideo, url=url, ext='m3u8')
+                )
+            ]
+        ),
+        MediaObject(
             protocol = 'rtmp',
             container = 'mpeg4',
             video_codec = VideoCodec.H264,
-            video_resolution = 1080,
+            video_resolution = 720,
             video_frame_rate = 30,
             audio_channels = 2,
             optimized_for_streaming = True,
             parts = [
                 PartObject(
-                    key = Callback(PlayVideo, url=url)
+                    key = Callback(PlayRTMPVideo, url=url)
                 )
             ]
         )
@@ -77,7 +92,15 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url):
+def PlayHLSVideo(url):
+
+    user_id = GetUserId(url)
+
+    return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL("%s/%s.m3u8" % (HITBOX_HLS_PLAYLIST_URL, user_id)))
+
+####################################################################################################
+@indirect
+def PlayRTMPVideo(url):
 
     user_id = GetUserId(url)
 
