@@ -72,8 +72,8 @@ def PopularStreamsMenu():
         viewers = stream['media_views']
 
         thumb = ""
-        if stream['media_thumbnail_large'] is not None:
-            thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
+        if stream['media_thumbnail'] is not None:
+            thumb = HITBOX_STATIC_URL + stream['media_thumbnail']
 
         countries = ""
         if stream['media_countries'] is not None:
@@ -115,8 +115,8 @@ def FollowingMenu():
         viewers = stream['media_views']
 
         thumb = ""
-        if stream['media_thumbnail_large'] is not None:
-            thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
+        if stream['media_thumbnail'] is not None:
+            thumb = HITBOX_STATIC_URL + stream['media_thumbnail']
 
         oc.add(VideoClipObject(
             url = channel_link,
@@ -182,8 +182,8 @@ def TeamStreamsMenu(group_display_name, group_name, group_id):
         viewers = stream['media_views']
 
         thumb = ""
-        if stream['media_thumbnail_large'] is not None:
-            thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
+        if stream['media_thumbnail'] is not None:
+            thumb = HITBOX_STATIC_URL + stream['media_thumbnail']
 
         oc.add(VideoClipObject(
             url = channel_link,
@@ -202,8 +202,8 @@ def TeamStreamsMenu(group_display_name, group_name, group_id):
         viewers = video['media_views']
 
         thumb = ""
-        if video['media_thumbnail_large'] is not None:
-            thumb = HITBOX_STATIC_URL + video['media_thumbnail_large']
+        if video['media_thumbnail'] is not None:
+            thumb = HITBOX_STATIC_URL + video['media_thumbnail']
 
         oc.add(VideoClipObject(
             url = video_link,
@@ -270,8 +270,8 @@ def GameStreamsMenu(category_name, category_id):
         viewers = stream['media_views']
 
         thumb = ""
-        if stream['media_thumbnail_large'] is not None:
-            thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
+        if stream['media_thumbnail'] is not None:
+            thumb = HITBOX_STATIC_URL + stream['media_thumbnail']
 
         countries = ""
         if stream['media_countries'] is not None:
@@ -311,8 +311,8 @@ def SearchResults(query=''):
             viewers = stream['media_views']
 
             thumb = ""
-            if stream['media_thumbnail_large'] is not None:
-                thumb = HITBOX_STATIC_URL + stream['media_thumbnail_large']
+            if stream['media_thumbnail'] is not None:
+                thumb = HITBOX_STATIC_URL + stream['media_thumbnail']
 
             oc.add(VideoClipObject(
                 url = channel_link,
@@ -338,8 +338,8 @@ def SearchResults(query=''):
             viewers = video['media_views']
 
             thumb = ""
-            if video['media_thumbnail_large'] is not None:
-                thumb = HITBOX_STATIC_URL + video['media_thumbnail_large']
+            if video['media_thumbnail'] is not None:
+                thumb = HITBOX_STATIC_URL + video['media_thumbnail']
 
             oc.add(VideoClipObject(
                 url = video_link,

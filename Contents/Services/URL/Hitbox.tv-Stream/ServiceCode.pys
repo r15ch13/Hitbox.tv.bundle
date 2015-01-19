@@ -37,8 +37,8 @@ def MetadataObjectForURL(url):
     viewers = media['media_views']
 
     thumb = ""
-    if media['media_thumbnail_large'] is not None:
-        thumb = HITBOX_STATIC_URL + media['media_thumbnail_large']
+    if media['media_thumbnail'] is not None:
+        thumb = HITBOX_STATIC_URL + media['media_thumbnail']
 
     art = ""
     if media['media_bg_image'] is not None:
