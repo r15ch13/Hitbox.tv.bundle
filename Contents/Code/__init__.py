@@ -45,6 +45,7 @@ def MainMenu():
     oc.add(DirectoryObject(key=Callback(GamesMenu), title=L("Games"), summary=L("Browse Live Streams by Game")))
     oc.add(DirectoryObject(key=Callback(FollowingMenu), title=L("Following"), summary=L("Browse Live Streams you're following (Login required)")))
     oc.add(DirectoryObject(key=Callback(TeamsMenu), title=L("My Teams"), summary=L("Browse Live Streams of your Teams (Login required)")))
+    oc.add(DirectoryObject(key=Callback(RecordingsMenu), title=L("Recordings"), summary=L("Recordings from last week")))
     oc.add(InputDirectoryObject(key=Callback(SearchResults), title="Search", prompt="Search for a Stream", summary="Search for a Stream"))
     oc.add(PrefsObject(title=L('Preferences')))
     Log.Info('MainMenu')
@@ -285,6 +286,47 @@ def GameStreamsMenu(category_name, category_id):
             url = channel_link,
             title = title,
             summary = '%s\n\n%s Viewers' % (status, viewers),
+            tagline = status,
+            thumb = Resource.ContentsOfURLWithFallback(thumb)
+        ))
+
+    return oc
+
+####################################################################################################
+@route('/video/hitbox/recordings')
+def RecordingsMenu():
+
+    oc = ObjectContainer(title2=L("Recordings"), no_cache=True)
+
+    try:
+        json = JSON.ObjectFromURL("%s?limit=%s&filter=weekly" % (HITBOX_VIDEO_LIST, PAGE_LIMIT))
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
+        return MessageContainer(NAME, L("No videos found."))
+
+    for video in json['video']:
+
+        video_link = "%s/video/%s" % (HITBOX_PAGE_URL, video['media_id'])
+        display_name = video['media_display_name']
+        game = video['category_name']
+        status = video['media_status']
+        viewers = video['media_views']
+
+        thumb = ""
+        if video['media_thumbnail'] is not None:
+            thumb = HITBOX_STATIC_URL + video['media_thumbnail']
+
+        countries = ""
+        if video['media_countries'] is not None:
+            countries = ", ".join(video['media_countries'])
+
+        title = '%s - %s' % (display_name, status)
+        if countries is not "":
+            title = '%s - %s [%s]' % (display_name, status, countries)
+
+        oc.add(VideoClipObject(
+            url = video_link,
+            title = title,
+            summary = '%s\n%s\n\n%s Viewers' % (game, status, viewers),
             tagline = status,
             thumb = Resource.ContentsOfURLWithFallback(thumb)
         ))
