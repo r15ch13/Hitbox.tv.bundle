@@ -8,12 +8,12 @@ Hitbox.tv Plugin
 
 from datetime import date
 from dateutil.parser import parse
+import urllib2
+import urllib2_new
 
-HITBOX_MEDIA_URL  = "https://api.hitbox.tv/media/live"
-HITBOX_SWF_URL    = "http://www.hitbox.tv/static/player/flowplayer/flowplayer.commercial-3.2.16.swf"
+HITBOX_MEDIA_URL  = "https://api.hitbox.tv/media/live/%s"
 HITBOX_STATIC_URL = "http://edge.sf.hitbox.tv"
-HITBOX_CONFIG_URL = "https://api.hitbox.tv/player/config/live"
-HITBOX_HLS_PLAYLIST_URL = "http://api.hitbox.tv/player/hls"
+HITBOX_HLS_URL = "http://api.hitbox.tv/player/hls/%s.m3u8"
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -24,12 +24,12 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
     user_id = GetUserId(url)
-    json = JSON.ObjectFromURL("%s/%s" % (HITBOX_MEDIA_URL, user_id), cacheTime=0)
+    json = JSON.ObjectFromURL(HITBOX_MEDIA_URL % user_id, cacheTime=0)
 
     if 'livestream' not in json or json['livestream'] is None or len(json['livestream']) is 0:
         raise Ex.LiveMediaNotStarted
 
-    media = json['livestream'][0]
+    media = json['livestream'][-1]
 
     display_name = media['media_display_name']
     game = media['category_name']
@@ -70,21 +70,7 @@ def MediaObjectsForURL(url):
             optimized_for_streaming = True,
             parts = [
                 PartObject(
-                    key = Callback(PlayHLSVideo, url=url, ext='m3u8')
-                )
-            ]
-        ),
-        MediaObject(
-            protocol = 'rtmp',
-            container = 'mpeg4',
-            video_codec = VideoCodec.H264,
-            video_resolution = 720,
-            video_frame_rate = 30,
-            audio_channels = 2,
-            optimized_for_streaming = True,
-            parts = [
-                PartObject(
-                    key = Callback(PlayRTMPVideo, url=url)
+                    key = Callback(PlayVideo, url=url)
                 )
             ]
         )
@@ -92,30 +78,32 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayHLSVideo(url):
+def PlayVideo(url):
 
     user_id = GetUserId(url)
 
-    return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL("%s/%s.m3u8" % (HITBOX_HLS_PLAYLIST_URL, user_id)))
+    playlistUrl = HITBOX_HLS_URL % user_id
 
-####################################################################################################
-@indirect
-def PlayRTMPVideo(url):
+    Log("Hitbox HLS: %s" % playlistUrl)
 
-    user_id = GetUserId(url)
-
-    try:
-        json = JSON.ObjectFromURL("%s/%s" % (HITBOX_CONFIG_URL, user_id))
-    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
-        return MessageContainer(NAME, L("Something went wrong..."))
-
-    rtmpUrl = json['playlist'][0]['netConnectionUrl']
-
-    rtmp = RTMPVideoURL(url=rtmpUrl, clip=user_id, swf_url=HITBOX_SWF_URL, live=True)
-
-    return IndirectResponse(VideoClipObject, key=rtmp)
+    return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(playlistUrl))
 
 ####################################################################################################
 def GetUserId(url):
 
     return url.split('/')[-1]
+
+####################################################################################################
+def TestURLs():
+
+    testUrls = []
+
+    try:
+        json = JSON.ObjectFromURL("https://api.hitbox.tv/media/live/list?limit=3")
+    except(urllib2.HTTPError, urllib2_new.HTTPError, ValueError), err:
+        return MessageContainer(NAME, L("No live streams found."))
+
+    for stream in json['livestream']:
+        testUrls.append(stream['channel']['channel_link'])
+
+    return testUrls
