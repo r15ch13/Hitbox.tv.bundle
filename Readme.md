@@ -13,7 +13,7 @@ Extract the zip file then copy the Hitbox.tv.bundle to your Plex Media Server's 
 
 The Hitbox.tv video channel should begin appearing on your Plex Media Server now.
 
-If you find any bugs, please submit them as issues to this GitHub project or the [https://forums.plex.tv/discussion/comment/769242](forum discussion).
+If you find any bugs, please submit them as issues to this GitHub project or the [forum discussion](https://forums.plex.tv/discussion/comment/769242).
 
 License
 -------
