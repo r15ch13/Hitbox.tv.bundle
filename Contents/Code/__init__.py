@@ -15,7 +15,7 @@ ART             = "art-default.png"
 ICON            = "icon-default.png"
 
 HITBOX_PAGE_URL     = "https://www.hitbox.tv"
-HITBOX_STATIC_URL   = "http://edge.hitbox.tv"
+HITBOX_STATIC_URL   = "https://edge.sf.hitbox.tv"
 HITBOX_AUTH_TOKEN   = "https://api.hitbox.tv/auth/token"
 HITBOX_USER_INFO    = "https://api.hitbox.tv/user"
 HITBOX_TEAMS        = "https://api.hitbox.tv/teams"

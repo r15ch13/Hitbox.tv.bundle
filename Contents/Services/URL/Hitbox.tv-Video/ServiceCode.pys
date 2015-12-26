@@ -12,8 +12,8 @@ import urllib2
 import urllib2_new
 
 HITBOX_MEDIA_URL  = "https://api.hitbox.tv/media/video/%s"
-HITBOX_STATIC_URL = "http://edge.sf.hitbox.tv"
-HITBOX_VOD_URL = "http://edge.hls.vods.hitbox.tv/static/videos/vods%s"
+HITBOX_STATIC_URL = "https://edge.sf.hitbox.tv"
+HITBOX_VOD_URL = "https://edge.hls.vods.hitbox.tv/static/videos/vods%s"
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -116,6 +116,6 @@ def TestURLs():
         return MessageContainer(NAME, L("No videos found."))
 
     for video in json['video']:
-        testUrls.append("http://www.hitbox.tv/video/%s" % video['media_id'])
+        testUrls.append("https://www.hitbox.tv/video/%s" % video['media_id'])
 
     return testUrls

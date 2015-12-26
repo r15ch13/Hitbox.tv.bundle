@@ -12,8 +12,8 @@ import urllib2
 import urllib2_new
 
 HITBOX_MEDIA_URL  = "https://api.hitbox.tv/media/live/%s"
-HITBOX_STATIC_URL = "http://edge.sf.hitbox.tv"
-HITBOX_HLS_URL = "http://api.hitbox.tv/player/hls/%s.m3u8"
+HITBOX_STATIC_URL = "https://edge.sf.hitbox.tv"
+HITBOX_HLS_URL = "https://api.hitbox.tv/player/hls/%s.m3u8"
 
 ####################################################################################################
 def NormalizeURL(url):
